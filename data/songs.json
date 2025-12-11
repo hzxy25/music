@@ -4,26 +4,26 @@
     "title": "江郎才尽",
     "artist": "卦者灵风",
     "duration": "3:43",
-    "src": "../assets/songs/song1.mp3",
-    "cover": "../assets/covers/cover1.png",
-    "lyrics": "../assets/lyrics/song1.lrc"
+    "src": "assets/songs/song1.mp3",
+    "cover": "assets/covers/cover1.png",
+    "lyrics": "assets/lyrics/song1.lrc"
   },
   {
     "id": 2,
     "title": "范进中举",
     "artist": "卦者灵风",
     "duration": "3:45",
-    "src": "../assets/songs/song2.mp3",
-    "cover": "../assets/covers/cover2.png",
-    "lyrics": "../assets/lyrics/song2.lrc"
+    "src": "assets/songs/song2.mp3",
+    "cover": "assets/covers/cover2.png",
+    "lyrics": "assets/lyrics/song2.lrc"
   },
   {
     "id": 3,
     "title": "坐忘道",
     "artist": "王朝1982",
     "duration": "2:54",
-    "src": "../assets/songs/song3.mp3",
-    "cover": "../assets/covers/cover3.png",
-    "lyrics": "../assets/lyrics/song3.lrc"
+    "src": "assets/songs/song3.mp3",
+    "cover": "assets/covers/cover3.png",
+    "lyrics": "assets/lyrics/song3.lrc"
   }
 ]
