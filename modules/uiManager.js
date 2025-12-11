@@ -9,6 +9,8 @@ class UIManager {
         this.currentFilter = 'all';
         this.selectedSongs = new Set();
         this.lastManualScrollTime = 0;
+        this.userManuallyScrolled = false;
+        this.backgroundImagePath = 'assets/background.jpg';
     }
 
     init() {
@@ -16,9 +18,53 @@ class UIManager {
         this.updateTheme();
         this.setupScrollDetection();
         this.userManuallyScrolled = false;
-
+        this.setupBackgroundImage();
         // 初始化批量操作工具栏为隐藏
         document.getElementById('batch-toolbar').classList.remove('visible');
+        this.toggleBackgroundBlur(); // 确保背景图片默认显示
+        this.autoScrollEnabled = true;
+        const autoScrollBtn = document.getElementById('toggle-auto-scroll');
+        if (autoScrollBtn) {
+            autoScrollBtn.classList.add('active');
+            const icon = autoScrollBtn.querySelector('i');
+            icon.className = 'fas fa-sync fa-spin';
+            autoScrollBtn.title = '自动滚动已开启';
+        }
+    }
+
+    setupBackgroundImage() {
+        const blurElement = document.querySelector('.background-blur');
+        if (!blurElement) return;
+
+        // 1. 设置背景图片（关键修复点）
+        blurElement.style.backgroundImage = `url('${this.backgroundImagePath}')`;
+
+        // 2. 确保图片覆盖整个背景
+        blurElement.style.backgroundSize = 'cover';
+        blurElement.style.backgroundPosition = 'center';
+
+        // 3. 深色模式下半透明，浅色模式下全透明
+        if (this.isDarkTheme) {
+            blurElement.style.opacity = '0.3';
+        } else {
+            blurElement.style.opacity = '1'; // 浅色模式下必须是1！
+        }
+    }
+
+    toggleBackgroundBlur() {
+        const blurElement = document.querySelector('.background-blur');
+        if (!blurElement) return;
+
+        if (blurElement.style.filter === 'blur(20px)') {
+            // 关闭模糊：只移除滤镜，保留背景图片
+            blurElement.style.filter = '';
+            // 重要：确保浅色模式下背景图片不消失
+            blurElement.style.opacity = '1';
+        } else {
+            // 开启模糊
+            blurElement.style.filter = 'blur(20px)';
+            blurElement.style.opacity = this.isDarkTheme ? '0.3' : '1';
+        }
     }
 
     bindEvents() {
@@ -189,20 +235,26 @@ class UIManager {
         playlistBody.innerHTML = '';
 
         // 如果歌曲列表为空，显示提示
+// 空状态美化
         if (songs.length === 0) {
             playlistBody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary)">
-                        <i class="fas fa-music" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                        ${this.currentFilter === 'favorites' ? '暂无收藏歌曲' :
+    <tr>
+      <td colspan="6" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-${this.currentFilter === 'favorites' ? 'heart' :
+                this.currentFilter === 'recent' ? 'history' : 'music'}"></i>
+        </div>
+        <p>${this.currentFilter === 'favorites' ? '暂无收藏歌曲' :
                 this.currentFilter === 'recent' ? '暂无最近播放记录' :
-                    '播放列表为空'}
-                    </td>
-                </tr>
-            `;
+                    '播放列表为空'}</p>
+        <button class="btn-small" onclick="document.getElementById('add-song-btn').click()">
+          <i class="fas fa-plus"></i> 添加歌曲
+        </button>
+      </td>
+    </tr>
+  `;
             return;
         }
-
         songs.forEach((song, index) => {
             const row = document.createElement('tr');
             row.className = 'song-row';
@@ -474,38 +526,35 @@ class UIManager {
             document.getElementById('album-cover').src = 'assets/covers/default.jpg';
             document.getElementById('current-song-title').textContent = '暂无播放';
             document.getElementById('current-song-artist').textContent = '选择歌曲开始播放';
-
             document.getElementById('mini-cover').src = 'assets/covers/default.jpg';
             document.getElementById('mini-song-title').textContent = '无歌曲';
             document.getElementById('mini-song-artist').textContent = '--';
-
             // 移除播放状态
             document.querySelectorAll('.song-row.playing').forEach(row => {
                 row.classList.remove('playing');
             });
-
             // 停止唱片旋转
             document.querySelector('.album-cover-wrapper').classList.remove('playing');
             return;
         }
 
+        // 添加过渡效果
+        const albumCoverWrapper = document.querySelector('.album-cover-wrapper');
+        albumCoverWrapper.classList.add('transitioning');
+
         // 更新封面和歌曲信息
         const coverImg = document.getElementById('album-cover');
         const miniCoverImg = document.getElementById('mini-cover');
-
         coverImg.src = song.cover || 'assets/covers/default.jpg';
         coverImg.onerror = () => {
             coverImg.src = 'assets/covers/default.jpg';
         };
-
         miniCoverImg.src = song.cover || 'assets/covers/default.jpg';
         miniCoverImg.onerror = () => {
             miniCoverImg.src = 'assets/covers/default.jpg';
         };
-
         document.getElementById('current-song-title').textContent = song.title;
         document.getElementById('current-song-artist').textContent = song.artist;
-
         document.getElementById('mini-song-title').textContent = song.title;
         document.getElementById('mini-song-artist').textContent = song.artist;
 
@@ -525,9 +574,14 @@ class UIManager {
 
         // 开始唱片旋转
         if (this.app.audioController.isPlaying) {
-            document.querySelector('.album-cover-wrapper').classList.add('playing');
+            // 确保移除过渡类，然后添加播放类
+            setTimeout(() => {
+                albumCoverWrapper.classList.remove('transitioning');
+                albumCoverWrapper.classList.add('playing');
+            }, 300);
+        } else {
+            albumCoverWrapper.classList.remove('transitioning');
         }
-
 
         const lyricsContainer = document.querySelector('.lyrics-container');
         if (lyricsContainer) {
@@ -648,50 +702,79 @@ class UIManager {
 
         const icon = button.querySelector('i');
         if (this.autoScrollEnabled) {
-            icon.className = 'fas fa-sync';
+            icon.className = 'fas fa-sync fa-spin'; // 开启时：有旋转动画
             button.title = '自动滚动已开启';
             this.userManuallyScrolled = false;
             this.lastManualScrollTime = 0;
 
-            // 立即同步到当前歌词位置
             const activeLine = document.querySelector('.lyrics-display p.active');
             if (activeLine) {
                 const index = parseInt(activeLine.dataset.index);
                 this.scrollToLyricTop(index);
             }
         } else {
-            icon.className = 'fas fa-sync fa-spin';
+            icon.className = 'fas fa-sync'; // 关闭时：无动画
             button.title = '自动滚动已关闭';
         }
     }
 
-
     toggleTheme() {
-        document.body.classList.toggle('light-theme');
+        document.body.classList.toggle('dark-theme');
         const themeIcon = document.querySelector('#theme-toggle i');
 
-        if (document.body.classList.contains('light-theme')) {
+        if (document.body.classList.contains('dark-theme')) {
             themeIcon.className = 'fas fa-sun';
-            themeIcon.title = '切换到深色模式';
+            themeIcon.title = '切换到浅色模式';
+            // 保存主题设置到本地存储
+            localStorage.setItem('musicPlayerTheme', 'dark');
         } else {
             themeIcon.className = 'fas fa-moon';
-            themeIcon.title = '切换到浅色模式';
+            themeIcon.title = '切换到深色模式';
+            localStorage.setItem('musicPlayerTheme', 'light');
         }
-
-        // 保存主题设置到本地存储
-        localStorage.setItem('musicPlayerTheme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
     }
 
     updateTheme() {
         // 从本地存储加载主题设置
         const savedTheme = localStorage.getItem('musicPlayerTheme');
 
-        if (savedTheme === 'light' ||
-            (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches && !savedTheme)) {
-            document.body.classList.add('light-theme');
-            const themeIcon = document.querySelector('#theme-toggle i');
-            themeIcon.className = 'fas fa-sun';
-            themeIcon.title = '切换到深色模式';
+        this.isDarkTheme = document.body.classList.contains('dark-theme');
+        // 无论深浅色模式，都确保背景图片存在
+        this.setupBackgroundImage();
+
+        // 深色模式下调整透明度
+        if (this.isDarkTheme) {
+            document.querySelector('.background-blur').style.opacity = '0.3';
+        } else {
+            // 浅色模式下：确保背景图片始终可见
+            document.querySelector('.background-blur').style.opacity = '1';
+        }
+        // 如果没有保存的主题设置，检查系统偏好
+        if (savedTheme) {
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                const themeIcon = document.querySelector('#theme-toggle i');
+                themeIcon.className = 'fas fa-sun';
+                themeIcon.title = '切换到浅色模式';
+            } else {
+                document.body.classList.remove('dark-theme');
+                const themeIcon = document.querySelector('#theme-toggle i');
+                themeIcon.className = 'fas fa-moon';
+                themeIcon.title = '切换到深色模式';
+            }
+        } else {
+            // 如果没有保存的设置，根据系统偏好设置
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.classList.add('dark-theme');
+                const themeIcon = document.querySelector('#theme-toggle i');
+                themeIcon.className = 'fas fa-sun';
+                themeIcon.title = '切换到浅色模式';
+            } else {
+                document.body.classList.remove('dark-theme');
+                const themeIcon = document.querySelector('#theme-toggle i');
+                themeIcon.className = 'fas fa-moon';
+                themeIcon.title = '切换到深色模式';
+            }
         }
     }
 
@@ -794,6 +877,7 @@ class UIManager {
         }
     }
 
+
     setupTouchEvents() {
         let touchStartX = 0;
         let touchStartY = 0;
@@ -826,6 +910,29 @@ class UIManager {
 
             touchStartX = 0;
             touchStartY = 0;
+        });
+        // 触摸反馈
+        playerSection.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+
+            // 添加触摸反馈
+            const touch = e.touches[0];
+            const ripple = document.createElement('div');
+            ripple.style.cssText = `
+    position: absolute;
+    top: ${touch.clientY - 20}px;
+    left: ${touch.clientX - 20}px;
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, rgba(37, 117, 252, 0.3) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    animation: ripple 0.6s ease-out;
+  `;
+            document.body.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
         });
     }
 

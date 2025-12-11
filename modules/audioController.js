@@ -146,6 +146,41 @@ class AudioController {
                 this.setPlaybackMode(e.target.dataset.mode);
             });
         });
+        // 波形可视化初始化
+        this.waveformCanvas = document.getElementById('waveform-canvas');
+        this.waveformCtx = this.waveformCanvas?.getContext('2d');
+        if (this.waveformCanvas) {
+            this.waveformCanvas.width = this.waveformCanvas.offsetWidth * 2; // Retina
+            this.waveformCanvas.height = this.waveformCanvas.offsetHeight * 2;
+            this.waveformCtx.scale(2, 2);
+        }
+
+// 进度条拇指位置更新
+        this.audio.addEventListener('timeupdate', () => this.updateProgressThumb());
+
+// 在 seek 方法中更新拇指位置
+        this.updateProgressThumb = () => {
+            const progress = this.audio.duration ? (this.audio.currentTime / this.audio.duration) * 100 : 0;
+            const thumb = document.querySelector('.progress-thumb');
+            if (thumb) {
+                thumb.style.left = `${progress}%`;
+            }
+
+            // 时间脉冲效果
+            const currentTimeEl = document.getElementById('current-time');
+            if (Math.floor(this.audio.currentTime) % 2 === 0) {
+                currentTimeEl.classList.add('pulse');
+            } else {
+                currentTimeEl.classList.remove('pulse');
+            }
+
+            // 缓冲进度模拟
+            if (this.audio.buffered.length > 0) {
+                const bufferEnd = this.audio.buffered.end(this.audio.buffered.length - 1);
+                const bufferPercent = (bufferEnd / this.audio.duration) * 100;
+                document.querySelector('.progress-buffer').style.width = `${bufferPercent}%`;
+            }
+        };
     }
 
     playSong(song) {
@@ -361,18 +396,28 @@ class AudioController {
     }
 
     // UI更新方法
+// UI更新方法
     updatePlayButton() {
         const playBtn = document.getElementById('play-pause-btn');
         const icon = playBtn.querySelector('i');
+        const albumCoverWrapper = document.querySelector('.album-cover-wrapper');
 
         if (this.isPlaying) {
             icon.className = 'fas fa-pause';
             playBtn.title = '暂停';
-            document.querySelector('.album-cover-wrapper').classList.add('playing');
+
+            // 确保添加playing类
+            if (albumCoverWrapper) {
+                albumCoverWrapper.classList.add('playing');
+            }
         } else {
             icon.className = 'fas fa-play';
             playBtn.title = '播放';
-            document.querySelector('.album-cover-wrapper').classList.remove('playing');
+
+            // 确保移除playing类
+            if (albumCoverWrapper) {
+                albumCoverWrapper.classList.remove('playing');
+            }
         }
     }
 

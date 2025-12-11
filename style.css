@@ -10,8 +10,164 @@
   --border-radius: 12px;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   --transition: all 0.3s ease;
+  --progress-bar-height: 6px;
+}
+/* ====================== 深色主题样式 ====================== */
+body.dark-theme {
+  --bg-main: #0f172a;
+  --bg-card: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* 深色主题下的进度条 */
+body.dark-theme .progress-bar {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* 深色主题下的玻璃拟态效果 */
+body.dark-theme .playlist-section,
+body.dark-theme .player-section,
+body.dark-theme .player-controls {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 深色主题下的按钮 */
+body.dark-theme .btn-icon {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-theme .btn-icon:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* 深色主题下的表格 */
+body.dark-theme .playlist-table th {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .playlist-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 深色主题下的进度条滑块 */
+body.dark-theme .progress-thumb {
+  background: white;
+  box-shadow: 0 0 10px var(--accent-color), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* 深色主题下的模态框 */
+body.dark-theme .modal-content {
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+/* ====================== 进度条美化 ====================== */
+.progress-bar {
+  flex: 1;
+  height: 8px; /* 加粗 */
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.95); /* 改为白色，提高对比度 */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  overflow: visible; /* 允许滑块溢出 */
+}
+
+/* 深色主题下的调整 */
+.dark-theme .progress-bar {
+  background: rgba(255, 255, 255, 0.15); /* 深色主题下稍暗的白色 */
+}
+
+/* 已播放部分 - 提高对比度 */
+.progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg,
+    #ff4757 0%,        /* 更鲜艳的红色 */
+    #ff6b81 50%,       /* 粉色 */
+    #ff4757 100%);     /* 回到红色 */
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.1s linear;
+  /* 添加光泽动画 */
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  box-shadow: 0 0 8px rgba(255, 71, 87, 0.7); /* 添加发光效果 */
+}
+
+/* 缓冲进度指示器 */
+.progress-buffer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.4); /* 提高对比度 */
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* 自定义滑块拇指 */
+.progress-slider {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 20px; /* 可触摸区域 */
+  opacity: 0; /* 隐藏默认样式 */
+  cursor: ew-resize;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+/* 可视化拇指 - 悬停时显示 */
+.progress-thumb {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px var(--accent-color), 0 2px 6px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.progress-bar:hover .progress-thumb {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+/* 当前时间脉冲效果 */
+#current-time.pulse {
+  color: var(--accent-color);
+  font-weight: 600;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* ====================== 波形可视化进度条 ====================== */
+.progress-waveform {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.3;
+  pointer-events: none;
+}
 /* 深色主题 */
 .dark-theme {
   --bg-main: #0f172a;
@@ -20,7 +176,205 @@
   --text-secondary: #94a3b8;
   --border-color: #334155;
 }
+/* ====================== 自定义光标 ====================== */
+/* 抓取光标 - 用于拖拽排序 */
+.song-row[draggable="true"] {
+  cursor: grab;
+}
 
+.song-row[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* 播放按钮悬停效果 */
+.control-btn {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.control-btn:hover {
+  cursor: pointer;
+  transform: scale(1.15) translateY(-2px);
+}
+
+/* 播放/暂停特殊光标 */
+#play-pause-btn:hover {
+  cursor: var(--cursor-play), pointer;
+}
+
+/* 链接样式按钮 */
+.btn-icon, .btn-small, .mode-btn {
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 涟漪效果 */
+.btn-icon::before, .btn-small::before, .mode-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-icon:active::before, .btn-small:active::before, .mode-btn:active::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* 禁用状态 */
+.song-row.playing {
+  cursor: default;
+}
+
+/* 音量滑块 */
+.volume-slider, .eq-range {
+  cursor: grab;
+}
+
+.volume-slider:active, .eq-range:active {
+  cursor: grabbing;
+}
+/* ====================== 玻璃拟态 ====================== */
+.playlist-section, .player-section, .player-controls {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* 深色主题调整 */
+.dark-theme .playlist-section,
+.dark-theme .player-section,
+.dark-theme .player-controls {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 卡片悬停浮起效果 */
+.song-row {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+.song-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 117, 252, 0.2);
+}
+/* ====================== 专辑封面动画 ====================== */
+.album-cover-wrapper {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 播放时脉冲效果 */
+.album-cover-wrapper.playing::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border: 2px solid var(--accent-color);
+  border-radius: 50%;
+  opacity: 0;
+  animation: pulse 2s infinite;
+  z-index: -1;
+}
+
+/* 修改黑胶唱片旋转动画 */
+.vinyl-record {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(from 0deg, #000 0deg 90deg, #333 90deg 180deg, #000 180deg 270deg, #333 270deg 360deg);
+  border-radius: 50%;
+  opacity: 0.3;
+  transition: var(--transition);
+  /* 移除这里的旋转动画 */
+}
+
+/* 修复：专辑封面旋转动画 */
+.album-cover-wrapper.playing #album-cover {
+  animation: rotate 20s linear infinite;
+}
+
+/* 播放时黑胶唱片效果 */
+.album-cover-wrapper.playing .vinyl-record {
+  opacity: 0.5;
+  /* 移除这里的旋转动画，避免双重旋转 */
+}
+
+/* 统一旋转动画 */
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ====================== 歌词卡拉OK效果 ====================== */
+.lyrics-display p {
+  position: relative;
+  overflow: hidden;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(
+    to right,
+    var(--accent-color) 0%,
+    var(--accent-color) 50%,
+    var(--text-secondary) 50%,
+    var(--text-secondary) 100%
+  );
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  transition: background-position 0.5s ease;
+}
+
+.lyrics-display p.active {
+  background-position: 0 0;
+  animation: karaoke 2s linear;
+}
+
+@keyframes karaoke {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* ====================== 空状态美化 ====================== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px !important;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.empty-state .btn-small {
+  margin-top: 20px;
+}
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
 * {
   margin: 0;
   padding: 0;
@@ -52,7 +406,9 @@ body {
   z-index: -1;
   transition: var(--transition);
 }
-
+body.dark-theme .background-blur {
+  opacity: 0.3; /* 深色模式下半透明 */
+}
 .background-blur.active {
   filter: blur(20px);
   opacity: 0.3;
@@ -253,15 +609,12 @@ body {
 
 /* ====================== 右侧播放器区域 ====================== */
 .player-section {
-  /* 原有样式保持不变 */
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 30px;
   min-width: 400px;
-
-  /* 新增：预留播放栏高度的空间 */
-  padding-bottom: 110px; /* 100px播放栏高度 + 10px缓冲 */
+  padding-bottom: 110px;
 }
 
 /* ====================== 专辑封面区域 ====================== */
@@ -283,6 +636,18 @@ body {
   height: 280px;
   border-radius: 50%;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transition: all 0.4s ease;
+  cursor: pointer;
+}
+.album-cover-wrapper.transitioning {
+    transform: scale(0.95);
+    opacity: 0.8;
+    transition: all 0.5s ease;
+}
+.album-cover-wrapper:hover {
+  transform: scale(1.03);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
 }
 
 .album-cover-wrapper::before {
@@ -314,7 +679,7 @@ body {
   height: 100%;
   background: conic-gradient(from 0deg, #000 0deg 90deg, #333 90deg 180deg, #000 180deg 270deg, #333 270deg 360deg);
   border-radius: 50%;
-  opacity: 0;
+  opacity: 0.3;
   transition: var(--transition);
 }
 
@@ -323,12 +688,7 @@ body {
 }
 
 .album-cover-wrapper.playing .vinyl-record {
-  opacity: 0.3;
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  opacity: 0.5;
 }
 
 .cover-overlay {
@@ -363,6 +723,7 @@ body {
   width: 100%;
   height: 100%;
   background: linear-gradient(to right, #6a11cb, #2575fc);
+  border-radius: var(--border-radius);
 }
 
 /* ====================== 歌词区域 ====================== */
@@ -398,9 +759,7 @@ body {
 }
 
 .lyrics-container {
-  /* 移除固定高度，改为自适应 */
-  /* height: 300px !important; */
-  max-height: calc(100vh - 400px); /* 根据页面布局动态计算 */
+  max-height: calc(100vh - 400px);
   overflow-y: auto;
   padding: 20px;
   scroll-behavior: smooth;
@@ -408,42 +767,44 @@ body {
 
 /* 歌词显示区域 */
 .lyrics-display {
-    text-align: center;
-    font-size: 1.1rem;
-    line-height: 1.8;
-    color: var(--text-secondary);
-    min-height: 100%;
-    padding: 20px 0 280px 0;  /* 顶部20px，底部280px，确保高亮在顶部 */
-    position: relative;
+  text-align: center;
+  font-size: 1.2rem;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  min-height: 100%;
+  padding: 20px 0 280px 0;
+  position: relative;
+  font-family: 'Lato', 'Segoe UI', sans-serif;
+  transition: all 0.3s ease;
 }
 
 .lyrics-display p {
-    margin: 12px 0;
-    transition: var(--transition);
-    padding: 8px 15px;
-    border-radius: 6px;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* 避免行内元素布局偏差 */
-    box-sizing: border-box;
+  margin: 15px 0;
+  padding: 10px 20px;
+  border-radius: 10px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  cursor: default;
 }
 
 .lyrics-display p.active {
-    color: var(--accent-color);
-    font-weight: 600;
-    font-size: 1.2rem;
-    background: rgba(37, 117, 252, 0.1);
-    transform: scale(1.05);
+  color: var(--accent-color);
+  font-weight: 700;
+  font-size: 1.3rem;
+  background: rgba(37, 117, 252, 0.15);
+  box-shadow: 0 0 15px rgba(37, 117, 252, 0.3);
+  transform: scale(1.05);
 }
 
 /* 无歌词时的样式 */
 .no-lyrics {
-    text-align: center;
-    color: var(--text-secondary);
-    font-style: italic;
-    padding: 40px 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 40px 0;
 }
 
 /* ====================== 底部播放器控制面板 ====================== */
@@ -516,14 +877,16 @@ body {
   justify-content: center;
   cursor: pointer;
   color: var(--text-primary);
-  transition: var(--transition);
+  transition: all 0.3s ease;
   font-size: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .control-btn:hover {
+  transform: translateY(-3px);
   background: var(--accent-color);
   color: white;
-  transform: scale(1.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .playback-mode {
@@ -547,7 +910,7 @@ body {
   background: rgba(37, 117, 252, 0.1);
 }
 
-/* 进度条 */
+/* 进度条美化 */
 .progress-container {
   width: 100%;
   display: flex;
@@ -563,11 +926,24 @@ body {
 
 .progress-bar {
   flex: 1;
-  height: 6px;
-  background: var(--border-color);
-  border-radius: 3px;
+  height: var(--progress-bar-height);
+  border-radius: var(--border-radius);
   position: relative;
   cursor: pointer;
+  background: linear-gradient(to right, var(--accent-color), var(--primary-color));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: var(--transition);
+}
+
+.progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(to right, var(--accent-color), var(--primary-color));
+  border-radius: var(--border-radius);
+  width: 0%;
+  transition: width 0.1s linear;
 }
 
 .progress-slider {
@@ -577,19 +953,25 @@ body {
   width: 100%;
   height: 100%;
   opacity: 0;
-  cursor: pointer;
+  cursor: ew-resize;
   z-index: 2;
 }
 
-.progress-fill {
+.progress-indicator {
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
+  top: -10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   background: var(--accent-color);
-  border-radius: 3px;
-  width: 0%;
-  transition: width 0.1s linear;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 3;
+}
+
+.progress-bar:hover .progress-indicator {
+  opacity: 1;
 }
 
 /* 右侧额外控制 */
