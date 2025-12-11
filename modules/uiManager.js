@@ -122,6 +122,7 @@ class UIManager {
             });
         });
     }
+
     setFilter(filter) {
         this.currentFilter = filter;
 
@@ -147,24 +148,38 @@ class UIManager {
         switch (this.currentFilter) {
             case 'favorites':
                 filteredSongs = playlist.filter(song => favorites.has(song.id));
+                // 保持收藏歌曲的顺序与主播放列表一致
+                filteredSongs.sort((a, b) => {
+                    const aIndex = playlist.findIndex(s => s.id === a.id);
+                    const bIndex = playlist.findIndex(s => s.id === b.id);
+                    return aIndex - bIndex;
+                });
                 break;
             case 'recent':
                 // 获取最近播放的歌曲
-                const recentIds = recentlyPlayed.map(item => item.id);  // 修正：直接使用item.id
+                const recentIds = recentlyPlayed.map(item => item.id);
                 filteredSongs = playlist.filter(song => recentIds.includes(song.id));
 
                 // 按最近播放时间排序
                 filteredSongs.sort((a, b) => {
                     const aIndex = recentIds.indexOf(a.id);
                     const bIndex = recentIds.indexOf(b.id);
-                    return aIndex - bIndex; // 最近播放的在前
+                    return aIndex - bIndex;
                 });
                 break;
             case 'all':
             default:
-                filteredSongs = [...playlist];
+                filteredSongs = [...playlist]; // 复制数组以保持拖动排序后的顺序
                 break;
         }
+
+        // 保存当前显示的歌曲列表供上下首切换使用
+        this.currentFilteredSongs = filteredSongs;
+
+        this.updatePlaylist(filteredSongs);
+
+        this.currentFilteredSongs = filteredSongs;
+        console.log('更新显示歌曲列表:', filteredSongs.length, '首歌曲');
 
         this.updatePlaylist(filteredSongs);
     }
@@ -179,9 +194,9 @@ class UIManager {
                 <tr>
                     <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary)">
                         <i class="fas fa-music" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                        ${this.currentFilter === 'favorites' ? '暂无收藏歌曲' : 
-                          this.currentFilter === 'recent' ? '暂无最近播放记录' : 
-                          '播放列表为空'}
+                        ${this.currentFilter === 'favorites' ? '暂无收藏歌曲' :
+                this.currentFilter === 'recent' ? '暂无最近播放记录' :
+                    '播放列表为空'}
                     </td>
                 </tr>
             `;
@@ -192,6 +207,7 @@ class UIManager {
             const row = document.createElement('tr');
             row.className = 'song-row';
             row.dataset.songId = song.id;
+            row.draggable = true; // 确保所有歌曲行都可拖动
 
             // 如果是当前播放的歌曲，添加特殊样式
             if (this.app.audioController.currentSong?.id === song.id) {
@@ -207,35 +223,35 @@ class UIManager {
             const isFavorite = this.app.playlistManager.favorites.has(song.id);
 
             row.innerHTML = `
-                <td>
-                    <input type="checkbox" class="select-song" value="${song.id}" 
-                           ${this.selectedSongs.has(song.id) ? 'checked' : ''}>
-                </td>
-                <td>${index + 1}</td>
-                <td>
-                    <div class="song-info-mini">
-                        <img src="${song.cover || 'assets/covers/default.jpg'}" 
-                             alt="封面" 
-                             class="mini-cover"
-                             onerror="this.src='assets/covers/default.jpg'">
-                        <div>
-                            <strong>${song.title}</strong>
-                            ${isFavorite ? 
-                                '<i class="fas fa-heart favorite-icon" style="color: #ff4757; margin-left: 5px;"></i>' : ''}
-                        </div>
-                    </div>
-                </td>
-                <td>${song.artist}</td>
-                <td>${song.duration || '0:00'}</td>
-                <td>
-                    <button class="btn-icon favorite-action" data-song-id="${song.id}" title="${isFavorite ? '取消收藏' : '收藏'}">
-                        <i class="${isFavorite ? 'fas' : 'far'} fa-heart"></i>
-                    </button>
-                    <button class="btn-icon remove-song" data-song-id="${song.id}" title="删除">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
+        <td>
+            <input type="checkbox" class="select-song" value="${song.id}" 
+                   ${this.selectedSongs.has(song.id) ? 'checked' : ''}>
+        </td>
+        <!-- 移除序号单元格 -->
+        <td>
+            <div class="song-info-mini">
+                <img src="${song.cover || 'assets/covers/default.jpg'}" 
+                     alt="封面" 
+                     class="mini-cover"
+                     onerror="this.src='assets/covers/default.jpg'">
+                <div>
+                    <strong>${song.title}</strong>
+                    ${isFavorite ?
+                '<i class="fas fa-heart favorite-icon" style="color: #ff4757; margin-left: 5px;"></i>' : ''}
+                </div>
+            </div>
+        </td>
+        <td>${song.artist}</td>
+        <td>${song.duration || '0:00'}</td>
+        <td>
+            <button class="btn-icon favorite-action" data-song-id="${song.id}" title="${isFavorite ? '取消收藏' : '收藏'}">
+                <i class="${isFavorite ? 'fas' : 'far'} fa-heart"></i>
+            </button>
+            <button class="btn-icon remove-song" data-song-id="${song.id}" title="删除">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
 
             // 歌曲点击事件
             row.addEventListener('click', (e) => {
@@ -354,7 +370,7 @@ class UIManager {
         // 更新全选复选框状态
         const visibleCheckboxes = document.querySelectorAll('.select-song:not([style*="display: none"])');
         const allChecked = visibleCheckboxes.length > 0 &&
-                          Array.from(visibleCheckboxes).every(cb => cb.checked);
+            Array.from(visibleCheckboxes).every(cb => cb.checked);
         selectAllCheckbox.checked = allChecked;
         selectAllCheckbox.indeterminate = this.selectedSongs.size > 0 && !allChecked;
     }
@@ -452,7 +468,6 @@ class UIManager {
     }
 
 
-
     updateNowPlaying(song) {
         if (!song) {
             // 重置显示
@@ -514,10 +529,10 @@ class UIManager {
         }
 
 
-    const lyricsContainer = document.querySelector('.lyrics-container');
-    if (lyricsContainer) {
-        lyricsContainer.scrollTop = 0;
-    }
+        const lyricsContainer = document.querySelector('.lyrics-container');
+        if (lyricsContainer) {
+            lyricsContainer.scrollTop = 0;
+        }
     }
 
     updateFavoriteButton(isFavorite) {
@@ -816,7 +831,7 @@ class UIManager {
 
     // 更新最近播放列表显示
     updateRecentlyPlayedDisplay() {
-         console.log('更新最近播放显示，当前筛选器:', this.currentFilter);
+        console.log('更新最近播放显示，当前筛选器:', this.currentFilter);
         console.log('最近播放列表:', this.app.playlistManager.recentlyPlayed);
 
         // 这个方法现在通过updatePlaylistDisplay来统一处理
@@ -827,4 +842,4 @@ class UIManager {
     }
 }
 
-export { UIManager };
+export {UIManager};

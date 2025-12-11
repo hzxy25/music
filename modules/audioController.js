@@ -72,7 +72,7 @@ class AudioController {
         document.getElementById('next-btn').addEventListener('click', () => this.app.playNext());
         document.getElementById('prev-btn').addEventListener('click', () => this.app.playPrevious());
 
-                // 替换原有的鼠标拖动处理代码
+        // 替换原有的鼠标拖动处理代码
         const progressSlider = document.getElementById('progress-slider');
         const progressBar = document.querySelector('.progress-bar');
 
@@ -312,7 +312,7 @@ class AudioController {
 
                 const text = line.replace(/\[.*?\]/g, '').trim();
                 if (text) {
-                    lyrics.push({ time, text });
+                    lyrics.push({time, text});
                 }
             }
         });
@@ -453,4 +453,4 @@ class AudioController {
     }
 }
 
-export { AudioController };
+export {AudioController};

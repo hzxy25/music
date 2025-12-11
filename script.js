@@ -1,7 +1,7 @@
 // 主应用程序
-import { AudioController } from './modules/audioController.js';
-import { PlaylistManager } from './modules/playlistManager.js';
-import { UIManager } from './modules/uiManager.js';
+import {AudioController} from './modules/audioController.js';
+import {PlaylistManager} from './modules/playlistManager.js';
+import {UIManager} from './modules/uiManager.js';
 
 class MusicPlayer {
     constructor() {
@@ -28,33 +28,23 @@ class MusicPlayer {
     }
 
     async loadInitialPlaylist() {
-            try {
-                const response = await fetch('data/songs.json');
-                const songs = await response.json();
-                this.playlistManager.setPlaylist(songs);
-                this.uiManager.updatePlaylistDisplay();
+        try {
+            const response = await fetch('data/songs.json');
+            const songs = await response.json();
 
-                // 确保UI更新后显示正确的筛选状态
-                console.log('播放列表加载完成，当前筛选器:', this.uiManager.currentFilter);
-            } catch (error) {
-                console.error('加载播放列表失败:', error);
-                // 使用默认播放列表
-                const defaultSongs = [
-                    {
-                        id: 1,
-                        title: "示例歌曲",
-                        artist: "示例艺术家",
-                        duration: "3:45",
-                        src: "assets/songs/sample.mp3",
-                        cover: "assets/covers/default.jpg",
-                        lyrics: "assets/lyrics/sample.lrc"
-                    }
-                ];
-                this.playlistManager.setPlaylist(defaultSongs);
-                this.uiManager.updatePlaylistDisplay();
-            }
+            // 确保歌曲有ID
+            songs.forEach(song => {
+                if (song.id === undefined) {
+                    song.id = this.getNextId(); // 但此时PlaylistManager尚未初始化，需用其他方式
+                }
+            });
+
+            this.playlistManager.setPlaylist(songs);
+            this.uiManager.updatePlaylistDisplay();
+        } catch (error) {
+            // 错误处理
         }
-
+    }
 
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
@@ -63,7 +53,7 @@ class MusicPlayer {
                 return;
             }
 
-            switch(e.key) {
+            switch (e.key) {
                 case ' ':
                     e.preventDefault();
                     this.audioController.togglePlay();
@@ -99,30 +89,46 @@ class MusicPlayer {
     }
 
     playNext() {
-        const nextSong = this.playlistManager.getNextSong();
-        if (nextSong) {
-            this.playSong(nextSong);
+        const filteredSongs = this.playlistManager.getDisplayedSongs();
+        const currentSong = this.getCurrentSong();
+        if (currentSong) {
+            // 找到当前歌曲在显示列表中的位置
+            const currentIndex = filteredSongs.findIndex(s => s.id === currentSong.id);
+            const nextIndex = (currentIndex + 1) % filteredSongs.length;
+            const nextSong = filteredSongs[nextIndex];
+            if (nextSong) {
+                this.playSong(nextSong);
+            }
+        } else if (filteredSongs.length > 0) {
+            // 如果没有当前歌曲，播放显示列表的第一首
+            this.playSong(filteredSongs[0]);
         }
     }
+
 
     playPrevious() {
-        const prevSong = this.playlistManager.getPreviousSong();
-        if (prevSong) {
-            this.playSong(prevSong);
+        const filteredSongs = this.playlistManager.getDisplayedSongs();
+        const currentSong = this.getCurrentSong();
+        if (currentSong) {
+            // 找到当前歌曲在显示列表中的位置
+            const currentIndex = filteredSongs.findIndex(s => s.id === currentSong.id);
+            const prevIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : filteredSongs.length - 1;
+            const prevSong = filteredSongs[prevIndex];
+            if (prevSong) {
+                this.playSong(prevSong);
+            }
+        } else if (filteredSongs.length > 0) {
+            // 如果没有当前歌曲，播放显示列表的最后一首
+            this.playSong(filteredSongs[filteredSongs.length - 1]);
         }
     }
 
-    toggleFavorite(songId) {
-        return this.playlistManager.toggleFavorite(songId);
-    }
 
     getCurrentSong() {
         return this.audioController.currentSong;
     }
 
-    getPlaylist() {
-        return this.playlistManager.getPlaylist();
-    }
+
 }
 
 // 启动应用
@@ -130,4 +136,4 @@ document.addEventListener('DOMContentLoaded', () => {
     window.musicPlayer = new MusicPlayer();
 });
 
-export { MusicPlayer };
+export {MusicPlayer};
